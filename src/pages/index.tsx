@@ -1,22 +1,25 @@
 import * as React from 'react';
-
-import Layout from '@/components/layout/Layout';
-import Seo from '@/components/Seo';
+import dynamic from 'next/dynamic';
+const LineChart = dynamic(() => import('@/components/LineChart'), { ssr: false });
+import TickerPairList from '@/components/TicketPairList';
 
 export default function HomePage() {
   return (
-    <Layout>
-      {/* <Seo templateTitle='Home' /> */}
-      <Seo />
-
-      <main>
-        <section className='bg-white'>
-          <div className='layout flex min-h-screen flex-col items-center justify-center text-center'>
-            <div className='left-panel'></div>
-            <div className='right-panel'></div>
+    <main className='bg-zinc-700'>
+      <section className='w-full text-white'>
+        <div className='flex w-full flex-col lg:flex-row'>
+          <div className='left-panel box-border flex w-full items-center justify-center p-4'>
+            <div className='w-full rounded-2xl bg-dark p-2'>
+              <LineChart/>
+            </div>
           </div>
-        </section>
-      </main>
-    </Layout>
+          <div className='right-panel box-border flex w-full items-start justify-start p-4'>
+            <div className='w-full rounded-2xl bg-dark p-2'>
+              <TickerPairList />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }

@@ -1,42 +1,53 @@
 import { useState } from 'react';
+import Decimal from 'decimal.js-light';
 
-const COINBASE_BASE_URL = 'https://api.coinbase.com/v2';
+Decimal.set({
+  precision: 20,
+  rounding: Decimal.ROUND_HALF_UP,
+  toExpNeg: -7,
+  toExpPos: 21,
+});
 
 export const useFindTicker = () => {
-  // Holds value for search form
-  const [symbol, setSymbol] = useState('');
+  const [data, setData] = useState('');
 
-  // Holds data value of cryptocurrency market data
-  const [data, setData] = useState(null);
+  const [timestamp, setTimestamp] = useState('');
 
-  // Holds error messages from Coinbase API
   const [error, setError] = useState([{}]);
 
   return {
-    setSymbol,
     data,
+    timestamp,
     error,
-    getTodayPrice: async () => {
+    getPrice: async () => {
       try {
-        // No need to make a request if symbol value is empty.
-        if (symbol.trim().length < 1) {
-          setError([
-            { message: 'Enter a symbol and fiat currency. e.g - BTC-USD' },
-          ]);
-          return;
-        }
+        // Fetch ticker data from Bitstamp API
+        const response_bitstamp: any = await fetch('/api/bitstamp_price');
 
-        // Fetch ticker data from Coinbase API
-        const res = await fetch(
-          `${COINBASE_BASE_URL}/prices/${symbol.trim()}/buy`
-        );
-        const { errors, data } = await res.json();
+        const response_bitfinex: any = await fetch('/api/bitfinex_price');
 
-        // IF any errors, set error to state
-        setError(errors);
+        const response_coinbase: any = await fetch('/api/coinbase_price');
+
+        const res_bitstamp = await response_bitstamp.json();
+        const res_bitfinex = await response_bitfinex.json();
+        const res_coinbase = await response_coinbase.json();
 
         // Set ticker data to state
-        setData(data);
+        const bitstamp_value = new Decimal(res_bitstamp.last);
+        const bitfinex_value = new Decimal(res_bitfinex[0][1]);
+        const coinbase_value = new Decimal(res_coinbase.data.rates.USD);
+
+        const sumValue = bitstamp_value
+          .plus(bitfinex_value)
+          .plus(coinbase_value);
+        const averageValue = sumValue.dividedBy(3).toFixed(5);
+
+        setTimestamp(res_bitstamp.timestamp);
+        setData(averageValue.toString());
+
+        // IF any errors, set error to state
+        // setError(errors);
+
         return;
       } catch (e) {
         console.error(e);
